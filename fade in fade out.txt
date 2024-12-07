@@ -1,0 +1,39 @@
+PROGRAM:
+ORG 00H             ; Start program at address 00H
+
+MAIN:  MOV P2, #00H ; Initialize Port 2 (LED off)
+       ACALL FADE_IN ; Call Fade In subroutine
+       ACALL FADE_OUT ; Call Fade Out subroutine
+       SJMP MAIN    ; Repeat forever
+
+; Subroutine to Fade In the LED
+FADE_IN:
+       MOV R0, #00H ; Start with 0% duty cycle (LED off)
+FADE_IN_LOOP:
+       ACALL PWM    ; Call the PWM subroutine with the current duty cycle
+       INC R0       ; Increase the duty cycle
+       CJNE R0, #FFH, FADE_IN_LOOP ; Repeat until max brightness (100% duty cycle)
+       RET
+
+; Subroutine to Fade Out the LED
+FADE_OUT:
+       MOV R0, #FFH ; Start with 100% duty cycle (LED on)
+FADE_OUT_LOOP:
+       ACALL PWM    ; Call the PWM subroutine with the current duty cycle
+       DEC R0       ; Decrease the duty cycle
+       CJNE R0, #00H, FADE_OUT_LOOP ; Repeat until min brightness (0% duty cycle)
+       RET
+
+; PWM subroutine
+PWM:
+       MOV A, R0     ; Load duty cycle value
+       MOV B, #FFH   ; Set maximum period
+       MOV P1, #00H  ; LED ON (active-low, so writing 0 turns on the LED)
+PWM_ON_LOOP:
+       DJNZ A, PWM_ON_LOOP ; Delay based on duty cycle (LED ON time)
+       MOV P1, #01H  ; LED OFF
+PWM_OFF_LOOP:
+       DJNZ B, PWM_OFF_LOOP ; Delay for the rest of the period (LED OFF time)
+       RET           ; Return from subroutine
+
+END
